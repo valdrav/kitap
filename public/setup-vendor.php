@@ -1,53 +1,51 @@
 <?php
 
 /**
- * Plesk: https://kitap.kurtulum.com/setup-vendor.php
- * composer install. İş bitince SİL.
+ * Plesk: /setup-vendor.php
+ * open_basedir yüzünden is_file(/opt/plesk/...) patlar; yine de exec dene.
+ * Web PHP 8.3 iken PATH'teki php 7.4 olabiliyor.
  */
 set_time_limit(0);
 ini_set('memory_limit', '512M');
 ini_set('display_errors', '1');
+error_reporting(E_ALL & ~E_WARNING);
 header('Content-Type: text/plain; charset=utf-8');
 
 echo "=== Dernek Kitap — composer install ===\n\n";
 
+function phpWorks(string $bin): bool
+{
+    $out = [];
+    $code = 1;
+    @exec(escapeshellarg($bin).' -r "echo PHP_MAJOR_VERSION;" 2>/dev/null', $out, $code);
+
+    return $code === 0 && isset($out[0]) && (int) $out[0] >= 8;
+}
+
 function findPhpCli(): string
 {
+    // open_basedir is_file engeller — kontrol etme, doğrudan dene
     $candidates = [
         '/opt/plesk/php/8.3/bin/php',
         '/opt/plesk/php/8.2/bin/php',
+        '/opt/plesk/php/8.4/bin/php',
         '/opt/plesk/php/8.1/bin/php',
-        '/usr/bin/php',
-        '/usr/local/bin/php',
+        'php',
     ];
 
-    // PHP_BINARY çoğu zaman php-fpm olur; onu kullanma
     foreach ($candidates as $bin) {
-        if (is_file($bin) && is_executable($bin)) {
+        if (phpWorks($bin)) {
             return $bin;
         }
     }
 
-    // Son çare: version ile hangi php varsa
-    foreach (glob('/opt/plesk/php/*/bin/php') ?: [] as $bin) {
-        if (is_executable($bin)) {
-            return $bin;
-        }
-    }
-
-    return 'php';
+    // 8.x bulunamadıysa yine plesk 8.3'ü zorla (exec bazen yine çalışır)
+    return '/opt/plesk/php/8.3/bin/php';
 }
 
 function findProjectRoot(): ?string
 {
-    $dirs = [
-        dirname(__DIR__),
-        __DIR__,
-        realpath(__DIR__.'/..') ?: '',
-        realpath(__DIR__.'/../..') ?: '',
-    ];
-
-    foreach ($dirs as $dir) {
+    foreach ([dirname(__DIR__), __DIR__, realpath(__DIR__.'/..') ?: '', realpath(__DIR__.'/../..') ?: ''] as $dir) {
         if ($dir && is_file($dir.'/composer.json') && is_file($dir.'/artisan')) {
             return $dir;
         }
@@ -58,8 +56,7 @@ function findProjectRoot(): ?string
 
 $root = findProjectRoot();
 if ($root === null) {
-    echo "HATA: composer.json / artisan bulunamadı.\n";
-    echo "Çalışılan dizin: ".__DIR__."\n";
+    echo "HATA: composer.json bulunamadı.\n";
     exit(1);
 }
 
@@ -70,78 +67,78 @@ $php = findPhpCli();
 echo "PHP CLI: {$php}\n";
 
 $verOut = [];
-exec(escapeshellarg($php).' -v 2>&1', $verOut, $verCode);
+@exec(escapeshellarg($php).' -v 2>&1', $verOut, $verCode);
 echo trim(implode("\n", $verOut))."\n\n";
 
-if ($verCode !== 0 || stripos(implode("\n", $verOut), 'PHP') === false) {
-    echo "HATA: PHP CLI çalışmadı. Plesk SSH ile şunu dene:\n";
-    echo "cd {$root}\n";
-    echo "/opt/plesk/php/8.3/bin/php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\"\n";
-    echo "/opt/plesk/php/8.3/bin/php composer-setup.php\n";
-    echo "/opt/plesk/php/8.3/bin/php composer.phar install --no-dev --optimize-autoloader\n";
-    exit(1);
+$phpMajor = 0;
+@exec(escapeshellarg($php).' -r "echo PHP_MAJOR_VERSION;" 2>/dev/null', $majOut, $majCode);
+if ($majCode === 0 && isset($majOut[0])) {
+    $phpMajor = (int) $majOut[0];
+}
+
+$ignorePlatform = $phpMajor < 8;
+if ($ignorePlatform) {
+    echo "UYARI: CLI PHP < 8. Composer --ignore-platform-reqs ile kurulacak.\n";
+    echo "Site zaten PHP 8.3 ile çalışıyorsa bu sorun değil.\n";
+    echo "Kalıcı çözüm: Plesk → PHP Settings → 8.3 + SSH'da /opt/plesk/php/8.3/bin/php kullan.\n\n";
 }
 
 $composerPhar = $root.'/composer.phar';
-
 if (! is_file($composerPhar)) {
     echo "composer.phar indiriliyor...\n";
+    $setup = $root.'/composer-setup.php';
+    $ok = false;
 
-    $installerUrl = 'https://getcomposer.org/installer';
-    $installer = @file_get_contents($installerUrl);
-
-    if ($installer === false) {
-        // curl fallback
-        $tmp = $root.'/composer-setup.php';
-        $cmd = 'curl -sS '.escapeshellarg($installerUrl).' -o '.escapeshellarg($tmp);
-        echo "file_get_contents başarısız, curl deneniyor...\n";
-        passthru($cmd." 2>&1", $curlCode);
-        if (! is_file($tmp) || filesize($tmp) < 100) {
-            echo "HATA: Composer installer indirilemedi.\n";
-            exit(1);
-        }
+    $installer = @file_get_contents('https://getcomposer.org/installer');
+    if ($installer !== false) {
+        file_put_contents($setup, $installer);
+        $ok = true;
     } else {
-        file_put_contents($root.'/composer-setup.php', $installer);
+        @exec('curl -sS https://getcomposer.org/installer -o '.escapeshellarg($setup).' 2>&1', $cOut, $cCode);
+        $ok = is_file($setup) && filesize($setup) > 100;
+        if (! empty($cOut)) {
+            echo implode("\n", $cOut)."\n";
+        }
     }
 
-    $setup = $root.'/composer-setup.php';
+    if (! $ok) {
+        echo "HATA: installer indirilemedi.\n";
+        exit(1);
+    }
+
     $cmd = escapeshellarg($php).' '.escapeshellarg($setup)
         .' --install-dir='.escapeshellarg($root)
         .' --filename=composer.phar';
-
     echo "> {$cmd}\n";
     passthru($cmd.' 2>&1', $setupCode);
     @unlink($setup);
 
     if (! is_file($composerPhar)) {
-        echo "HATA: composer.phar oluşturulamadı. Kod: {$setupCode}\n";
-        echo "SSH ile kur:\n";
-        echo "cd {$root}\n";
-        echo "{$php} -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\"\n";
-        echo "{$php} composer-setup.php\n";
-        echo "{$php} composer.phar install --no-dev --optimize-autoloader\n";
+        echo "HATA: composer.phar yok. Kod: {$setupCode}\n";
         exit(1);
     }
     echo "composer.phar OK\n\n";
 }
 
-echo "composer install başlıyor (uzun sürebilir)...\n\n";
-$installCmd = escapeshellarg($php).' '.escapeshellarg($composerPhar)
-    .' install --no-dev --optimize-autoloader --no-interaction';
-echo "> {$installCmd}\n\n";
-passthru($installCmd.' 2>&1', $installCode);
+$flags = 'install --no-dev --optimize-autoloader --no-interaction';
+if ($ignorePlatform) {
+    $flags .= ' --ignore-platform-reqs';
+}
 
+$installCmd = escapeshellarg($php).' '.escapeshellarg($composerPhar).' '.$flags;
+echo "composer install...\n> {$installCmd}\n\n";
+passthru($installCmd.' 2>&1', $installCode);
 echo "\nÇıkış kodu: {$installCode}\n";
 
 if (is_file($root.'/vendor/autoload.php')) {
-    echo "\nOK: vendor/autoload.php oluştu.\n";
-    echo "Şimdi aç: /setup-artisan.php\n";
-    echo "Sonra bu dosyaları SİL: setup-vendor.php, setup-artisan.php\n";
+    echo "\nOK: vendor hazır.\n";
+    echo "Şimdi: /setup-artisan.php\n";
+    echo "Sonra setup-*.php dosyalarını SİL.\n";
     exit(0);
 }
 
-echo "\nHATA: vendor hâlâ yok.\n";
-echo "Plesk → Tools → SSH Terminal:\n\n";
+echo "\nHATA: vendor yok.\n";
+echo "Plesk SSH Terminal (PHP 8.3 ile):\n\n";
 echo "cd {$root}\n";
-echo "{$php} composer.phar install --no-dev --optimize-autoloader\n";
+echo "/opt/plesk/php/8.3/bin/php composer.phar install --no-dev --optimize-autoloader\n";
 exit(1);
