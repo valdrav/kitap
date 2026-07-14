@@ -12,5 +12,5 @@ php artisan route:cache
 php artisan view:cache
 php artisan filament:assets
 
-echo "==> Tamam. Giriş: /admin/login"
+echo "==> Tamam. Giriş: /login"
 echo "    E-posta: admin@kurtulum.com"

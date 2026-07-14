@@ -3,7 +3,7 @@
 ## Sorun
 
 Sitede "Let's get started / Laravel v13" görünüyorsa **yanlış proje** çalışıyordur.
-Bizim panel: Laravel 12 + Filament. Giriş adresi: `/admin/login`
+Bizim panel: Laravel 12 + Filament. Giriş adresi: `/login`
 
 ## Plesk / SSH ile doğru kurulum
 
@@ -74,8 +74,8 @@ Nginx/Apache yeniden yükle.
 
 Tarayıcıda aç:
 
-- https://kitap.kurtulum.com/  → `/admin/login` yönlendirmesi
-- https://kitap.kurtulum.com/admin/login → giriş formu
+- https://kitap.kurtulum.com/  → `/login` yönlendirmesi
+- https://kitap.kurtulum.com/login → giriş formu
 
 Giriş:
 

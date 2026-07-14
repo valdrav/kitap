@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('')
             ->login(Login::class)
             ->brandName('Dernek Kitap')
             ->brandLogo(asset('images/brand-logo.svg'))
