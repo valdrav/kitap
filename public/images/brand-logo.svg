@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <rect x="2" y="6" width="36" height="36" rx="10" fill="#0F766E"/>
+  <path d="M12 16.2c1.8-.7 3.8-1.1 5.8-1.1 2.1 0 4 .4 5.7 1.1v18.4c-1.7-.9-3.8-1.4-5.7-1.4-2 0-3.9.5-5.8 1.4V16.2Z" fill="white"/>
+  <path d="M25.5 16.2c1.8-.7 3.8-1.1 5.8-1.1 2.1 0 4 .4 5.7 1.1v18.4c-1.7-.9-3.8-1.4-5.7-1.4-2 0-3.9.5-5.8 1.4V16.2Z" fill="white" opacity=".75"/>
+  <text x="52" y="31" font-family="Figtree, system-ui, sans-serif" font-size="20" font-weight="700" fill="#0F766E">Dernek Kitap</text>
+</svg>
