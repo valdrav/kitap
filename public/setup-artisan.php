@@ -2,13 +2,35 @@
 
 /**
  * https://kitap.kurtulum.com/setup-artisan.php
- * key:generate, migrate --seed, cache. İş bitince SİL.
+ * İş bitince SİL.
  */
 set_time_limit(0);
+ini_set('display_errors', '1');
 header('Content-Type: text/plain; charset=utf-8');
 
+function findPhpCli(): string
+{
+    foreach ([
+        '/opt/plesk/php/8.3/bin/php',
+        '/opt/plesk/php/8.2/bin/php',
+        '/opt/plesk/php/8.1/bin/php',
+        '/usr/bin/php',
+    ] as $bin) {
+        if (is_file($bin) && is_executable($bin)) {
+            return $bin;
+        }
+    }
+    foreach (glob('/opt/plesk/php/*/bin/php') ?: [] as $bin) {
+        if (is_executable($bin)) {
+            return $bin;
+        }
+    }
+
+    return 'php';
+}
+
 $root = null;
-foreach ([dirname(__DIR__), __DIR__, realpath(__DIR__.'/..'), realpath(__DIR__.'/../..')] as $dir) {
+foreach ([dirname(__DIR__), __DIR__, realpath(__DIR__.'/..') ?: '', realpath(__DIR__.'/../..') ?: ''] as $dir) {
     if ($dir && is_file($dir.'/artisan') && is_file($dir.'/vendor/autoload.php')) {
         $root = $dir;
         break;
@@ -16,22 +38,21 @@ foreach ([dirname(__DIR__), __DIR__, realpath(__DIR__.'/..'), realpath(__DIR__.'
 }
 
 if (! $root) {
-    echo "HATA: artisan veya vendor yok. Önce /setup-vendor.php çalıştır.\n";
+    echo "HATA: artisan veya vendor yok. Önce /setup-vendor.php\n";
     exit(1);
 }
 
-echo "Proje: {$root}\n\n";
+echo "Proje: {$root}\n";
+$php = findPhpCli();
+echo "PHP CLI: {$php}\n\n";
 chdir($root);
-$php = PHP_BINARY ?: 'php';
-$artisan = $root.'/artisan';
 
-if (! is_file($root.'/.env')) {
-    if (is_file($root.'/.env.example')) {
-        copy($root.'/.env.example', $root.'/.env');
-        echo ".env örneğinden kopyalandı. DB şifresini kontrol et!\n";
-    }
+if (! is_file($root.'/.env') && is_file($root.'/.env.example')) {
+    copy($root.'/.env.example', $root.'/.env');
+    echo ".env kopyalandı — DB bilgilerini kontrol et!\n\n";
 }
 
+$artisan = $root.'/artisan';
 $commands = [
     'key:generate --force',
     'migrate --seed --force',
@@ -48,5 +69,5 @@ foreach ($commands as $cmd) {
     echo "kod: {$code}\n";
 }
 
-echo "\nBitti. /login adresini dene.\n";
-echo "setup-vendor.php ve setup-artisan.php dosyalarını SİL.\n";
+echo "\nBitti. /login dene.\n";
+echo "setup-*.php dosyalarını SİL.\n";
