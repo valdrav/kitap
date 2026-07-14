@@ -40,11 +40,11 @@ Web sunucusunun `public/` klasörünü document root olarak ayarlayın. Domain: 
 
 | | |
 |---|---|
-| Adres | `/admin/login` |
+| Adres | `https://kitap.kurtulum.com/login` |
 | E-posta | `admin@kurtulum.com` |
 | İlk şifre | `Kurtulum2026!` |
 
-Şifreyi **Ayarlar** sayfasından değiştirebilirsiniz (`/admin/settings`).
+Şifreyi **Ayarlar** sayfasından değiştirebilirsiniz (`/settings`).
 
 ## Yerel Geliştirme
 
