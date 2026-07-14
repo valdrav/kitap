@@ -1,0 +1,18 @@
+# Plesk → Apache & nginx Settings → Additional nginx directives
+# Aşağıdakini yapıştır (Document root httpdocs veya httpdocs/public iken):
+
+if (!-e $request_filename) {
+    rewrite ^ /index.php last;
+}
+
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+
+location ~ \.php$ {
+    try_files $uri =404;
+    include /etc/nginx/fastcgi.conf;
+    fastcgi_pass unix:/var/www/vhosts/system/kitap.kurtulum.com/php-fpm.sock;
+    # Not: fastcgi_pass satırı sunucuda farklı olabilir; Plesk bazen kendisi yönetir.
+    # Çakışma olursa sadece try_files satırlarını kullan.
+}
