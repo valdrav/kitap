@@ -40,11 +40,38 @@ Web sunucusunun `public/` klasörünü document root olarak ayarlayın. Domain: 
 
 | | |
 |---|---|
-| Adres | `https://kitap.kurtulum.com/login` |
+| Adres | `https://kitap.kurtulum.com/admin/login` |
 | E-posta | `admin@kurtulum.com` |
 | İlk şifre | `Kurtulum2026!` |
 
-Şifreyi **Ayarlar** sayfasından değiştirebilirsiniz (`/settings`).
+Şifreyi **Ayarlar** sayfasından değiştirebilirsiniz (`/admin/settings`).
+
+## Önemli (Canlı Sunucu)
+
+Document root mutlaka `public/` olmalı.
+
+```bash
+git clone https://github.com/valdrav/kitap.git
+cd kitap
+composer install --no-dev --optimize-autoloader
+cp .env.example .env
+nano .env   # APP_URL, DB_* ayarla
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+```
+
+Güncelleme:
+
+```bash
+bash deploy.sh
+```
+
+`/` adresi otomatik `/admin/login` ekranına yönlendirir.
+Kökte hâlâ "Let's get started / Laravel" görüyorsanız proje klasörü yanlış deploy edilmiş veya `composer install` yapılmamıştır.
 
 ## Yerel Geliştirme
 
