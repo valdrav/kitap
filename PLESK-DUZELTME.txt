@@ -1,0 +1,48 @@
+PLEŞK DÜZELTME (500 hatası: public/public + vendor yok)
+=====================================================
+
+Hata yolu:
+/var/www/vhosts/kurtulum.com/kitap.kurtulum.com/public/public/index.php
+
+Anlamı:
+- Proje şurada:  .../kitap.kurtulum.com/public/
+- Laravel public: .../kitap.kurtulum.com/public/public/
+- Document root yanlış / composer install yapılmamış
+
+YAPILACAKLAR (Plesk)
+--------------------
+1) Hosting Settings → Document root:
+
+   /kitap.kurtulum.com/public/public
+
+   (domain köküne göre: httpdocs değil, tam olarak içteki public)
+
+2) File Manager'da kontrol et:
+   .../public/vendor   → yoksa Composer çalıştırılmamış
+
+3) Plesk → Git / Composer veya SSH:
+
+   cd /var/www/vhosts/kurtulum.com/kitap.kurtulum.com/public
+   composer install --no-dev --optimize-autoloader
+   cp -n .env.example .env
+   # .env DB ayarla: kitap_db / kitap_user / Valdrav115
+   php artisan key:generate
+   php artisan migrate --seed --force
+   php artisan storage:link
+   php artisan optimize:clear
+   php artisan config:cache
+   php artisan route:cache
+
+4) Test:
+   https://kitap.kurtulum.com/login
+   https://kitap.kurtulum.com/kitap-ok.txt
+
+DAHA TEMİZ KURULUM (önerilen)
+-----------------------------
+Domain kökü:
+  /var/www/vhosts/kurtulum.com/kitap.kurtulum.com/httpdocs/
+
+içine projeyi koy, Document root:
+  /httpdocs/public
+
+Şu anki "public/public" yapısından kaçın.
