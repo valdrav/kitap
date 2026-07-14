@@ -40,11 +40,12 @@ APP_URL=https://kitap.kurtulum.com
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=kitap
-DB_USERNAME=VERITABANI_KULLANICI
-DB_PASSWORD=VERITABANI_SIFRE
+DB_DATABASE=kitap_db
+DB_USERNAME=kitap_user
+DB_PASSWORD=VERITABANI_SIFRESI
 ```
 
+> Şifreyi `.env` dosyasına yaz; Git'e ekleme.
 ### 4) Veritabanı + cache
 
 ```bash
