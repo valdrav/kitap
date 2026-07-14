@@ -2,8 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Kök: girişe gönder (Filament path '')
-Route::redirect('/', '/login');
+/*
+| Filament panel path '' olduğu için / paneli kapsar.
+| Burada / → /login yönlendirmesi YAPILMAZ; aksi halde giriş sonrası
+| login → / → login döngüsü (ERR_TOO_MANY_REDIRECTS) oluşur.
+| Misafirler Filament auth middleware ile /login'e alınır.
+*/
 
-// Eski Laravel karşılama sayfası bir şekilde açılırsa bile login'e al
 Route::view('/welcome', 'welcome');
